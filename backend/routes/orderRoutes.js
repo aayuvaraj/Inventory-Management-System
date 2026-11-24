@@ -1,0 +1,10 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const Model = require('../models/PurchaseOrder');
+const router = express.Router();
+const fields = ['productName', 'supplierName', 'quantity', 'status', 'notes'];
+router.get('/', async (req,res) => { try { res.json(await Model.find().sort({createdAt:-1})); } catch(e) { res.status(500).json({message:e.message}); } });
+router.post('/', async (req,res) => { try { const data = Object.fromEntries(fields.filter(k => req.body[k] !== undefined).map(k => [k,req.body[k]])); res.status(201).json(await Model.create(data)); } catch(e) { res.status(400).json({message:e.message}); } });
+router.put('/:id', async (req,res) => { try { if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({message:'Invalid ID'}); const data=Object.fromEntries(fields.filter(k=>req.body[k]!==undefined).map(k=>[k,req.body[k]])); const item=await Model.findByIdAndUpdate(req.params.id,data,{new:true,runValidators:true}); if(!item) return res.status(404).json({message:'Not found'}); res.json(item); } catch(e) {res.status(400).json({message:e.message});} });
+router.delete('/:id', async (req,res) => { try { if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({message:'Invalid ID'}); const item=await Model.findByIdAndDelete(req.params.id); if(!item) return res.status(404).json({message:'Not found'}); res.json({message:'Deleted'}); } catch(e) {res.status(500).json({message:e.message});} });
+module.exports = router;
